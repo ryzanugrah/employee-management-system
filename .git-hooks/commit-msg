@@ -1,0 +1,44 @@
+#!/bin/sh
+#
+# An example hook script to check the commit log message.
+# Called by "git commit" with one argument, the name of the file
+# that has the commit message.  The hook should exit with non-zero
+# status after issuing an appropriate message if it wants to stop the
+# commit.  The hook is allowed to edit the commit message file.
+#
+# To enable this hook, rename this file to "commit-msg".
+
+# Uncomment the below to add a Signed-off-by line to the message.
+# Doing this in a hook is a bad idea in general, but the prepare-commit-msg
+# hook is more suited to it.
+#
+# SOB=$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
+# grep -qs "^$SOB" "$1" || echo "$SOB" >> "$1"
+
+# This example catches duplicate Signed-off-by lines.
+
+# test "" = "$(grep '^Signed-off-by: ' "$1" |
+#	 sort | uniq -c | sed -e '/^[ 	]*1[ 	]/d')" || {
+#	echo >&2 Duplicate Signed-off-by lines.
+#	exit 1
+# }
+
+# Create a regex for a conventional commit.
+convetional_commit_regex="^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([a-z \-]+\))?!?: .+$"
+
+# Get the commit message (the parameter we're given is just the path to the
+# temporary file which holds the message).
+commit_message=$(cat "$1")
+
+# Check the message, if we match, all good baby.
+if [[ "$commit_message" =~ $convetional_commit_regex ]]; then
+   echo -e "\e[32mCommit message meets Conventional Commit standards...\e[0m"
+   exit 0
+fi
+
+# Uh-oh, this is not a conventional commit, show an example and link to the spec.
+echo -e "\e[31mThe commit message does not meet the Conventional Commit standard\e[0m"
+echo "An example of a valid message is: "
+echo "  feat(login): add the 'remember me' button"
+echo "More details at: https://www.conventionalcommits.org/en/v1.0.0/#summary"
+exit 1
